@@ -1,0 +1,4 @@
+[
+  { "course_id": "BIO99", "course_name": "量子生物学", "credits": 5, "teacher": "薛定谔" },
+  { "course_id": "LAW01", "course_name": "法律职业道德", "credits": 2, "teacher": "罗翔" }
+]
