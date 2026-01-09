@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>个人介绍 - 李金轩</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar">
+  <div class="logo">Personal Introduction</div>
+  <nav>
+    <ul>
+      <li><a href="#">首页</a></li>
+      <li><a href="https://docs.google.com/document/d/1F8zccqplrHmV1f0nXkQcPEdnhmY72LWc6FbCNedkqWU/edit?pli=1&tab=t.0">技术文档</a></li>
+      <li><a href="https://github.com/lijinxuan-debug?tab=repositories">GitHub</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section class="hero-section">
+  <div class="avatar">
+    <img src="../img/img.png" alt="头像" onerror="this.src='https://via.placeholder.com/150'">
+  </div>
+  <div class="intro-text">
+    <h1>你好，我是 <span>李金轩</span></h1>
+    <p>Java 后端开发工程师 | 多线程与并发研究者</p>
+    <button class="btn-contact" onclick="sayHello()">点击打招呼</button>
+  </div>
+</section>
+
+<section class="skills">
+  <h2>我的技能栈</h2>
+
+  <div class="skill-input-group">
+    <input type="text" id="skillInput" placeholder="输入新技能，如：Redis">
+    <button id="addSkillBtn">添加技能卡片</button>
+  </div>
+
+  <div class="skills-container" id="skillsContainer">
+    <div class="skill-card">Java 并发</div>
+    <div class="skill-card">MySQL 数据库</div>
+    <div class="skill-card">HTTP Server</div>
+    <div class="skill-card">JSON 处理</div>
+  </div>
+  <p style="margin-top: 20px; color: #888; font-size: 0.8rem;">提示：双击卡片可以将其删除</p>
+</section>
+
+<footer>
+  <p>&copy; 2026 李金轩. 基于原生 HTML/CSS/JS 开发.</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

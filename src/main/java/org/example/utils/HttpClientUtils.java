@@ -1,8 +1,5 @@
 package org.example.utils;
 
-import org.example.entity.Course;
-import org.example.entity.Grade;
-import org.example.entity.Student;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -11,15 +8,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class HttpClientUtils {
 
-    // 线程池：固定5个线程并发处理
-    private static final ExecutorService executor = Executors.newFixedThreadPool(5);
+    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(5,10,30, TimeUnit.SECONDS,new ArrayBlockingQueue<>(100));
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
@@ -257,6 +251,7 @@ public class HttpClientUtils {
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json; utf-8");
         conn.setRequestProperty("Accept", "application/json");
+//        conn.setRequestProperty("Authorization", "Bearer my-secret-token");
         conn.setDoOutput(true);
 
         // 写入请求体

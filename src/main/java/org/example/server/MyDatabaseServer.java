@@ -12,7 +12,9 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class MyDatabaseServer {
 
@@ -26,7 +28,8 @@ public class MyDatabaseServer {
         server.createContext("/api/grades", new GradeHandler());
 
         // 3. 关键：设置线程池，处理来自客户端的并发 HTTP 请求
-        server.setExecutor(Executors.newFixedThreadPool(10));
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(5,10,30, TimeUnit.SECONDS,new ArrayBlockingQueue<>(100));
+        server.setExecutor(executor);
 
         System.out.println("[Server] 数据库后端已启动，正在监听 8080 端口...");
         server.start();
@@ -77,6 +80,17 @@ public class MyDatabaseServer {
             exchange.sendResponseHeaders(405, -1);
             return;
         }
+
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+
+        // 模拟检测逻辑：判断是否存在，且是否以 "Bearer " 开头（常见的 Token 格式）
+        // 这里我们简单模拟：如果 Token 不是 "my-secret-token"，就认为是非法访问
+        if (authHeader == null || !authHeader.equals("Bearer my-secret-token")) {
+            System.err.println("[Auth] 拦截到非法请求：Token 缺失或错误");
+            sendResponse(exchange, 401, "Unauthorized: Invalid or missing token");
+            return;
+        }
+
 
         try (InputStream is = exchange.getRequestBody();
              Connection conn = JdbcUtil.getConnection()) {
