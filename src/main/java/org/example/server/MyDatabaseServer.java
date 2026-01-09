@@ -4,123 +4,124 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.example.utils.JdbcUtil;
+import org.json.JSONArray;
 import org.json.JSONObject;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
 
 public class MyDatabaseServer {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         // 1. 创建服务器，监听 8080 端口
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
-        // 2. 为三个不同的请求路径设置处理器
-        server.createContext("/updateStudent", new UpdateHandler("student"));
-        server.createContext("/updateCourse", new UpdateHandler("course"));
-        server.createContext("/updateGrade", new UpdateHandler("grade"));
+        // 2. 注册路由，分别处理学生、课程、成绩
+        server.createContext("/api/students", new StudentHandler());
+        server.createContext("/api/courses", new CourseHandler());
+        server.createContext("/api/grades", new GradeHandler());
 
-        server.setExecutor(null); // 使用默认执行器
-        System.out.println(">>> 服务端已启动，监听端口: 8080");
-        System.out.println(">>> 等待客户端发送 JSON 请求...");
+        // 3. 关键：设置线程池，处理来自客户端的并发 HTTP 请求
+        server.setExecutor(Executors.newFixedThreadPool(10));
+
+        System.out.println("[Server] 数据库后端已启动，正在监听 8080 端口...");
         server.start();
     }
 
-    // 统一的处理器类
-    static class UpdateHandler implements HttpHandler {
-        private final String type;
-
-        public UpdateHandler(String type) {
-            this.type = type;
-        }
-
+    // --- 处理器 1：处理学生数据 ---
+    private static class StudentHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            // 只处理 POST 请求
-            if (!"POST".equals(exchange.getRequestMethod())) {
-                sendResponse(exchange, "请使用 POST 方法", 405);
-                return;
-            }
+            processRequest(exchange, "INSERT INTO students (student_id, name, gender, birth_date, class_name) VALUES (?, ?, ?, ?, ?)", (json, ps) -> {
+                ps.setInt(1, json.getInt("student_id"));
+                ps.setString(2, json.getString("name"));
+                ps.setString(3, json.getString("gender"));
+                ps.setString(4, json.getString("birth_date"));
+                ps.setString(5, json.getString("class_name"));
+            });
+        }
+    }
 
-            // 1. 读取客户端发来的 JSON 字符串
-            StringBuilder sb = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    sb.append(line);
+    // --- 处理器 2：处理课程数据 ---
+    private static class CourseHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            processRequest(exchange, "INSERT INTO courses (course_id, course_name, credits, teacher) VALUES (?, ?, ?, ?)", (json, ps) -> {
+                ps.setString(1, json.getString("course_id"));
+                ps.setString(2, json.getString("course_name"));
+                ps.setInt(3, json.getInt("credits"));
+                ps.setString(4, json.getString("teacher"));
+            });
+        }
+    }
+
+    // --- 处理器 3：处理成绩数据 ---
+    private static class GradeHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            processRequest(exchange, "INSERT INTO grades (student_id, course_id, score, exam_date) VALUES (?, ?, ?, ?)", (json, ps) -> {
+                ps.setInt(1, json.getInt("student_id"));
+                ps.setString(2, json.getString("course_id"));
+                ps.setDouble(3, json.getDouble("score"));
+                ps.setString(4, json.getString("exam_date"));
+            });
+        }
+    }
+
+    private static void processRequest(HttpExchange exchange, String sql, JdbcTask task) throws IOException {
+        if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(405, -1);
+            return;
+        }
+
+        try (InputStream is = exchange.getRequestBody();
+             Connection conn = JdbcUtil.getConnection()) {
+
+            // 1. 读取原始字符串并去掉首尾空格
+            java.util.Scanner s = new java.util.Scanner(is, "UTF-8").useDelimiter("\\A");
+            String body = s.hasNext() ? s.next().trim() : "";
+
+            // 2. 既然确定是数组，改用 JSONArray 解析
+            JSONArray jsonArray = new JSONArray(body);
+            System.out.println("[Log] 收到数组，包含记录数: " + jsonArray.length());
+
+            // 3. 开启事务（可选，建议开启，保证这一批数据要么全成，要么全败）
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                // 4. 遍历数组中的每一个 JSONObject
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject item = jsonArray.getJSONObject(i);
+
+                    // 调用具体的映射逻辑
+                    task.map(item, ps);
+
+                    // 执行插入
+                    ps.executeUpdate();
                 }
-            }
-            String jsonStr = sb.toString();
-            System.out.println("收到 " + type + " 更新请求: " + jsonStr);
+                conn.commit(); // 提交事务
 
-            // 2. 解析 JSON 并操作数据库
-            boolean success = false;
-            try {
-                JSONObject json = new JSONObject(jsonStr);
-                success = executeDatabaseUpdate(json);
+                sendResponse(exchange, 200, "Bulk Insert Success: " + jsonArray.length());
             } catch (Exception e) {
-                e.printStackTrace();
+                conn.rollback(); // 出错回滚
+                throw e;
             }
 
-            // 3. 返回处理结果
-            if (success) {
-                sendResponse(exchange, "Update Success!", 200);
-            } else {
-                sendResponse(exchange, "Update Failed!", 500);
-            }
+        } catch (Exception e) {
+            System.err.println("处理失败: " + e.getMessage());
+            sendResponse(exchange, 500, "Error: " + e.getMessage());
         }
+    }
 
-        // 核心：根据不同类型执行不同的 SQL
-        private boolean executeDatabaseUpdate(JSONObject json) throws Exception {
-            // 注意：这里调用你之前封装的 JdbcUtils
-            try (Connection conn = JdbcUtil.getConnection()) {
-                String sql;
-                PreparedStatement pstmt = null;
-
-                switch (type) {
-                    case "student":
-                        sql = "UPDATE students SET name=?, class_name=? WHERE student_id=?";
-                        pstmt = conn.prepareStatement(sql);
-                        pstmt.setString(1, json.getString("name"));
-                        pstmt.setString(2, json.getString("class_name"));
-                        pstmt.setInt(3, json.getInt("student_id"));
-                        break;
-                    case "course":
-                        sql = "UPDATE courses SET course_name=?, teacher=? WHERE course_id=?";
-                        pstmt = conn.prepareStatement(sql);
-                        pstmt.setString(1, json.getString("course_name"));
-                        pstmt.setString(2, json.getString("teacher"));
-                        pstmt.setString(3, json.getString("course_id"));
-                        break;
-                    case "grade":
-                        // 成绩更新通常基于 学生ID 和 课程ID
-                        sql = "UPDATE grades SET score=? WHERE student_id=? AND course_id=?";
-                        pstmt = conn.prepareStatement(sql);
-                        pstmt.setBigDecimal(1, json.getBigDecimal("score"));
-                        pstmt.setInt(2, json.getInt("student_id"));
-                        pstmt.setString(3, json.getString("course_id"));
-                        break;
-                }
-
-                if (pstmt != null) {
-                    int rows = pstmt.executeUpdate();
-                    return rows > 0;
-                }
-            }
-            return false;
-        }
-
-        private void sendResponse(HttpExchange exchange, String resp, int code) throws IOException {
-            byte[] bytes = resp.getBytes(StandardCharsets.UTF_8);
-            exchange.sendResponseHeaders(code, bytes.length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(bytes);
-            os.close();
+    private static void sendResponse(HttpExchange exchange, int code, String text) throws IOException {
+        byte[] resp = text.getBytes();
+        exchange.sendResponseHeaders(code, resp.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(resp);
         }
     }
 }

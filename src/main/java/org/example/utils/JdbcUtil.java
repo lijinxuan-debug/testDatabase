@@ -10,7 +10,7 @@ public class JdbcUtil {
 
     private static final String URL = "jdbc:mysql://bj-cynosdbmysql-grp-cidv0no6.sql.tencentcdb.com:27953/test2?useSSL=false&serverTimezone=UTC";
     private static final String USER = "root";
-    private static final String PASSWORD = "你的密码";
+    private static final String PASSWORD = "LJX666.-";
 
     static {
         try {

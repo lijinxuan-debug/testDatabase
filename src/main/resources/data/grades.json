@@ -1,7 +1,7 @@
 [
-  { "student_id": 2024010, "course_id": "LAW01", "score": 98.50, "exam_date": "2026-01-08" },
-  { "student_id": 2024012, "course_id": "BIO99", "score": 100.00, "exam_date": "2026-01-08" },
-  { "student_id": 2024013, "course_id": "LAW01", "score": 82.00, "exam_date": "2026-01-08" },
-  { "student_id": 2024013, "course_id": "BIO99", "score": 45.00, "exam_date": "2026-01-10" },
-  { "student_id": 2024011, "course_id": "BIO99", "score": 72.50, "exam_date": "2026-01-10" }
+  { "grade_id": 5, "student_id": 2024010, "course_id": "LAW01", "score": 98.50, "exam_date": "2026-01-08" },
+  { "grade_id": 6, "student_id": 2024012, "course_id": "BIO99", "score": 100.00, "exam_date": "2026-01-08" },
+  { "grade_id": 7, "student_id": 2024013, "course_id": "LAW01", "score": 82.00, "exam_date": "2026-01-08" },
+  { "grade_id": 8, "student_id": 2024013, "course_id": "BIO99", "score": 45.00, "exam_date": "2026-01-10" },
+  { "grade_id": 9, "student_id": 2024011, "course_id": "BIO99", "score": 72.50, "exam_date": "2026-01-10" }
 ]

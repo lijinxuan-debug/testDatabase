@@ -1,6 +1,30 @@
 [
-  { "student_id": 2024010, "name": "法外狂徒张三", "gender": "男", "birth_date": "2000-01-01", "class_name": "法律实验班" },
-  { "student_id": 2024011, "name": "卢本伟", "gender": "男", "birth_date": "2002-05-05", "class_name": "计算机一班" },
-  { "student_id": 2024012, "name": "居里夫人", "gender": "女", "birth_date": "1867-11-07", "class_name": "物理卓越班" },
-  { "student_id": 2024013, "name": "普通同学", "gender": "女", "birth_date": "2005-06-01", "class_name": "法律实验班" }
+    {
+        "gender": "男",
+        "birth_date": "2000-01-01",
+        "name": "法外狂徒张三",
+        "student_id": 2024010,
+        "class_name": "法律实验班"
+    },
+    {
+        "gender": "男",
+        "birth_date": "2002-05-05",
+        "name": "卢本伟",
+        "student_id": 2024011,
+        "class_name": "计算机一班"
+    },
+    {
+        "gender": "女",
+        "birth_date": "1867-11-07",
+        "name": "居里夫人",
+        "student_id": 2024012,
+        "class_name": "物理卓越班"
+    },
+    {
+        "gender": "女",
+        "birth_date": "2005-06-01",
+        "name": "普通同学",
+        "student_id": 2024013,
+        "class_name": "法律实验班"
+    }
 ]
