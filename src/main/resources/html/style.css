@@ -1,10 +1,7 @@
-/* =========================================
-   1. 全局重置 (Global Reset)
-   ========================================= */
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box; /* 盒模型：包含内边距和边框 */
+    box-sizing: border-box;
 }
 
 body {
@@ -14,13 +11,10 @@ body {
     color: #333;
 }
 
-/* =========================================
-   2. 导航栏 (Navbar - Flex Layout)
-   ========================================= */
 .navbar {
     display: flex;
-    justify-content: space-between; /* 左右对齐 */
-    align-items: center;            /* 垂直居中 */
+    justify-content: space-between;
+    align-items: center;
     padding: 15px 8%;
     background-color: #2c3e50;
     color: white;
@@ -36,7 +30,7 @@ body {
 .navbar ul {
     display: flex;
     list-style: none;
-    gap: 30px; /* 子元素间距 */
+    gap: 30px;
 }
 
 .navbar a {
@@ -48,10 +42,6 @@ body {
 .navbar a:hover {
     color: #3498db;
 }
-
-/* =========================================
-   3. 个人介绍区 (Hero Section)
-   ========================================= */
 .hero-section {
     display: flex;
     flex-direction: column;
@@ -102,10 +92,6 @@ body {
     background-color: #2980b9;
     transform: scale(1.05);
 }
-
-/* =========================================
-   4. 技能交互区 (Skill Management)
-   ========================================= */
 .skills {
     padding: 60px 8%;
     background-color: #f4f7f6;
@@ -117,7 +103,6 @@ body {
     position: relative;
 }
 
-/* 输入框组合 */
 .skill-input-group {
     margin-bottom: 40px;
     display: flex;
@@ -148,7 +133,6 @@ body {
     font-weight: bold;
 }
 
-/* 技能卡片容器 */
 .skills-container {
     display: flex;
     flex-wrap: wrap;
@@ -163,7 +147,7 @@ body {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     cursor: pointer;
     transition: all 0.3s ease;
-    user-select: none; /* 防止双击选中文本 */
+    user-select: none;
 }
 
 .skill-card:hover {
@@ -172,9 +156,6 @@ body {
     color: #3498db;
 }
 
-/* =========================================
-   5. 页脚 (Footer)
-   ========================================= */
 footer {
     padding: 40px;
     background-color: #2c3e50;

@@ -6,10 +6,9 @@ import com.sun.net.httpserver.HttpServer;
 import org.example.utils.JdbcUtil;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -83,8 +82,7 @@ public class MyDatabaseServer {
 
         String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-        // 模拟检测逻辑：判断是否存在，且是否以 "Bearer " 开头（常见的 Token 格式）
-        // 这里我们简单模拟：如果 Token 不是 "my-secret-token"，就认为是非法访问
+        // 模拟：如果 Token 不是 "my-secret-token"，就认为是非法访问
         if (authHeader == null || !authHeader.equals("Bearer my-secret-token")) {
             System.err.println("[Auth] 拦截到非法请求：Token 缺失或错误");
             sendResponse(exchange, 401, "Unauthorized: Invalid or missing token");
@@ -95,25 +93,18 @@ public class MyDatabaseServer {
         try (InputStream is = exchange.getRequestBody();
              Connection conn = JdbcUtil.getConnection()) {
 
-            // 1. 读取原始字符串并去掉首尾空格
-            java.util.Scanner s = new java.util.Scanner(is, "UTF-8").useDelimiter("\\A");
-            String body = s.hasNext() ? s.next().trim() : "";
+            String body = readStream(is);
 
-            // 2. 既然确定是数组，改用 JSONArray 解析
             JSONArray jsonArray = new JSONArray(body);
-            System.out.println("[Log] 收到数组，包含记录数: " + jsonArray.length());
 
-            // 3. 开启事务（可选，建议开启，保证这一批数据要么全成，要么全败）
+            // 开启事务（保证这一批数据要么全成，要么全败）
             conn.setAutoCommit(false);
 
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                // 4. 遍历数组中的每一个 JSONObject
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject item = jsonArray.getJSONObject(i);
 
-                    // 调用具体的映射逻辑
                     task.map(item, ps);
-
                     // 执行插入
                     ps.executeUpdate();
                 }
@@ -129,6 +120,19 @@ public class MyDatabaseServer {
             System.err.println("处理失败: " + e.getMessage());
             sendResponse(exchange, 500, "Error: " + e.getMessage());
         }
+    }
+
+    public static String readStream(InputStream is) {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            System.err.println("IO异常");
+        }
+        return sb.toString().trim();
     }
 
     private static void sendResponse(HttpExchange exchange, int code, String text) throws IOException {

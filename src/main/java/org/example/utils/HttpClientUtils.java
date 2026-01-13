@@ -146,7 +146,7 @@ public class HttpClientUtils {
 
             System.out.println("\n[系统] 开始同步 " + dataName + " 数据...");
 
-            int batchSize = 50; // 每 50 条打包一次
+            int batchSize = 50;
 
             int totalBatches = (total + batchSize - 1) / batchSize;
             CountDownLatch latch = new CountDownLatch(totalBatches);
@@ -158,7 +158,7 @@ public class HttpClientUtils {
                     batch.put(dataArray.getJSONObject(j));
                 }
 
-                // 将这一包数据交给线程池
+                // 交给线程池
                 executor.execute(() -> {
                     int code = sendJsonRequest(apiUrl, batch.toString());
                     if (code == 200) {
@@ -208,7 +208,7 @@ public class HttpClientUtils {
                     break;
                 }
                 else if (lastCode == HttpURLConnection.HTTP_FORBIDDEN) { // 403
-                    System.err.println("错误 402: 服务器拒绝访问，你可能没有操作权限。");
+                    System.err.println("错误 403: 服务器拒绝访问，你可能没有操作权限。");
                     break;
                 }
                 else if (lastCode == HttpURLConnection.HTTP_NOT_FOUND) { // 404
@@ -251,7 +251,7 @@ public class HttpClientUtils {
         conn.setRequestMethod("POST");
         conn.setRequestProperty("Content-Type", "application/json; utf-8");
         conn.setRequestProperty("Accept", "application/json");
-//        conn.setRequestProperty("Authorization", "Bearer my-secret-token");
+        conn.setRequestProperty("Authorization", "Bearer my-secret-token");
         conn.setDoOutput(true);
 
         // 写入请求体
